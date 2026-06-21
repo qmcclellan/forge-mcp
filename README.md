@@ -4,13 +4,13 @@ Read-only MCP server that gives Claude Code structured knowledge about the Forge
 
 Forge remains the authoritative application. forge-mcp reads Forge; it does not modify it.
 
-## v0.1.0 has no write tools.
+## v0.1.1 has no write tools.
 
 ## Tools
 
 | Tool | Purpose |
 |---|---|
-| `get_forge_overview` | Forge version, CLI entry point, capabilities, templates, doc paths |
+| `get_forge_overview` | Forge version, CLI entry point, capabilities, templates, doc availability |
 | `list_templates` | Available local templates with metadata |
 | `get_template_summary` | One template: purpose, language, files, variables, output structure |
 | `list_template_files` | Sorted file listing for one template |
@@ -60,6 +60,17 @@ See `docs/claude-code-setup.md` and `examples/claude-code.mcp.json`.
 python -m pytest -q
 python -m ruff check src/ tests/
 ```
+
+## Document availability
+
+`get_forge_overview` distinguishes between documents that are approved in the allowlist and documents that are currently present on disk:
+
+- `available_documents` — approved identifiers whose files exist in the Forge repository right now
+- `unavailable_documents` — approved identifiers configured in the allowlist but whose files are absent
+
+Both fields are always present. Both are sorted alphabetically by identifier. The union of the two sets always equals the full approved-document allowlist.
+
+`read_forge_document` accepts only approved identifiers. It returns a structured error with code `DOCUMENT_NOT_FOUND` when the identifier is unknown or the file is absent, and `DOCUMENT_ERROR` for other read failures (binary content, size limit, encoding). It never accepts arbitrary paths.
 
 ## Security
 

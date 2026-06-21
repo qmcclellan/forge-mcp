@@ -11,7 +11,7 @@ import re
 from pathlib import Path
 from typing import Any
 
-from .errors import TemplateNotFoundError
+from .errors import DocumentNotFoundError, TemplateNotFoundError
 from .limits import MAX_LIST_ENTRIES
 from .paths import (
     APPROVED_DOCUMENTS,
@@ -108,6 +108,14 @@ class ForgeRepository:
     def read_approved_document(self, doc_id: str) -> str:
         """Read an approved Forge document by stable identifier."""
         path = safe_document_path(self._root, doc_id)
+        # Raise DocumentNotFoundError (not PathViolationError) for approved-but-absent files
+        # so callers can distinguish "unknown identifier" from "approved but unavailable".
+        # Symlinks fall through to check_readable_file and remain PathViolationError.
+        if not path.is_symlink() and not path.exists():
+            raise DocumentNotFoundError(
+                f"Document {doc_id!r} is approved but not currently available "
+                f"in this Forge repository"
+            )
         check_readable_file(path)
         return path.read_text(encoding="utf-8")
 
