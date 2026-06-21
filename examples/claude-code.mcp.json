@@ -1,0 +1,11 @@
+{
+  "mcpServers": {
+    "forge-mcp": {
+      "command": "/srv/workspaces/projects/portfolio/forge-mcp/.venv/bin/forge-mcp",
+      "args": [],
+      "env": {
+        "FORGE_REPOSITORY_ROOT": "/srv/workspaces/projects/portfolio/forge"
+      }
+    }
+  }
+}
