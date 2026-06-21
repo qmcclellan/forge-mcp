@@ -186,8 +186,13 @@ class ForgeKnowledge:
         templates = self._repo.list_template_names()
         available_docs = {
             doc_id: rel_path
-            for doc_id, rel_path in APPROVED_DOCUMENTS.items()
+            for doc_id, rel_path in sorted(APPROVED_DOCUMENTS.items())
             if self._repo.document_exists(doc_id)
+        }
+        unavailable_docs = {
+            doc_id: rel_path
+            for doc_id, rel_path in sorted(APPROVED_DOCUMENTS.items())
+            if not self._repo.document_exists(doc_id)
         }
         return {
             "forge_version": version,
@@ -209,6 +214,7 @@ class ForgeKnowledge:
             "template_variables": _TEMPLATE_VARIABLES,
             "project_metadata_path": ".forge/project.json",
             "available_documents": available_docs,
+            "unavailable_documents": unavailable_docs,
         }
 
     # ------------------------------------------------------------------

@@ -12,7 +12,7 @@ from mcp.server.fastmcp import FastMCP
 
 from . import __version__
 from .config import get_forge_root
-from .errors import ForgeMCPError, structured_error
+from .errors import DocumentNotFoundError, ForgeMCPError, structured_error
 from .repository import ForgeRepository
 from .services import ForgeKnowledge
 
@@ -97,6 +97,8 @@ def read_forge_document(document_id: str) -> dict[str, Any]:
     """Read approved Forge documentation using a stable document identifier. Approved identifiers: readme, runbook, architecture, artifact-publishing, template-registry-runbook, interview-talk-track, forge-yaml-example."""
     try:
         return _knowledge().read_forge_document(document_id)
+    except DocumentNotFoundError as exc:
+        return structured_error("DOCUMENT_NOT_FOUND", str(exc))
     except ForgeMCPError as exc:
         return structured_error("DOCUMENT_ERROR", str(exc))
 

@@ -1,6 +1,6 @@
 """Exact exported-tool contract test.
 
-This test asserts the precise v0.1.0 tool names. Any addition, removal, or rename
+This test asserts the precise v0.1.1 tool names. Any addition, removal, or rename
 of a tool is a breaking contract change and must fail here first.
 """
 
@@ -8,7 +8,7 @@ from __future__ import annotations
 
 from forge_mcp.server import mcp
 
-# Exact v0.1.0 tool contract — do not modify without a version bump.
+# Exact v0.1.1 tool contract — do not modify without a version bump.
 EXPECTED_TOOL_NAMES = frozenset(
     {
         "get_forge_overview",

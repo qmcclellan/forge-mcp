@@ -39,4 +39,4 @@ def test_all_modules_importable():
 def test_package_version_string():
     from forge_mcp import __version__
     assert isinstance(__version__, str)
-    assert __version__ == "0.1.0"
+    assert __version__ == "0.1.1"
