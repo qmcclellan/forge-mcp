@@ -1,0 +1,9 @@
+[project]
+name = "forge"
+version = "0.9.9-test"
+description = "Public-safe fixture representing a Forge repository for forge-mcp tests."
+requires-python = ">=3.10"
+dependencies = []
+
+[project.scripts]
+forge = "forge.cli:main"
