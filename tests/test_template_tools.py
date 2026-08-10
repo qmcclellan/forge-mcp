@@ -121,3 +121,74 @@ def test_read_template_file_template_json(knowledge):
     result = knowledge.read_template_file("sample-worker", "template.json")
     assert result["path"] == "template.json"
     assert "sample-worker" in result["content"]
+
+
+# --- KS-0019: the documented receipt and identity variables must match Forge ---
+# forge-mcp is a read-only knowledge interface and is NEVER authoritative over
+# Forge: if it disagrees with Forge source, Forge wins. These pin the two
+# descriptions that drifted when Forge's receipt gained versioned identity
+# fields (forge/project_metadata.py, RECEIPT_VERSION = 2).
+
+_RECEIPT_V2_FIELDS = (
+    "receipt_version",
+    "project_name",
+    "project_slug",
+    "template_name",
+    "created_at",
+    "forge_version",
+    "docker_enabled",
+    "jenkins_enabled",
+    "git_initialized",
+    "remote_configured",
+)
+
+
+def test_receipt_description_lists_every_version_2_field(knowledge):
+    """The documented field list must not omit the versioned identity fields."""
+    described = knowledge.get_project_structure()["common_to_all_templates"][
+        ".forge/project.json"
+    ]
+
+    missing = [field for field in _RECEIPT_V2_FIELDS if field not in described]
+    assert not missing, f"receipt description omits: {missing}"
+
+
+def test_receipt_description_explains_versioned_identity(knowledge):
+    """Consumers must be told to branch on receipt_version, not guess.
+
+    A field list alone is not enough: an unversioned historical receipt stores
+    the derived slug in project_name, so a consumer that assumes project_name is
+    always a display name reads the wrong value.
+    """
+    described = knowledge.get_project_structure()["common_to_all_templates"][
+        ".forge/project.json"
+    ]
+
+    assert "version 2" in described
+    assert "receipt_version" in described
+    assert "not migrated" in described
+
+
+def test_template_summary_reports_the_same_receipt_description(knowledge):
+    """Both surfaces that expose the receipt must agree."""
+    summary = knowledge.get_template_summary("sample-worker")
+    structure = knowledge.get_project_structure()
+
+    assert (
+        summary["generated_output_structure"][".forge/project.json"]
+        == structure["common_to_all_templates"][".forge/project.json"]
+    )
+
+
+def test_identity_variable_descriptions_match_forge_semantics(knowledge):
+    """project_name is positional and project_slug is overridable by --slug.
+
+    Forge's `new` takes `name` positionally, and project_slug defaults to a slug
+    derived from it unless an explicit --slug is supplied. Describing the name as
+    a `--name` flag, or the slug as merely derived, misstates the CLI.
+    """
+    variables = knowledge.get_template_summary("sample-worker")["template_variables"]
+
+    assert "--name" not in variables["project_name"]
+    assert "positional" in variables["project_name"]
+    assert "--slug" in variables["project_slug"]

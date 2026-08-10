@@ -18,8 +18,12 @@ from .repository import ForgeRepository
 
 # Traceable to forge/cli.py::create_project() and forge/renderer.py::render_template_dir()
 _TEMPLATE_VARIABLES: dict[str, str] = {
-    "project_name": "Human-readable project name (--name argument)",
-    "project_slug": "Kebab-case slug derived from project_name (lowercase, hyphens)",
+    "project_name": "Human-readable display name (positional 'name' argument to forge new)",
+    "project_slug": (
+        "Machine identity: the generated directory and package base. Defaults to a "
+        "kebab-case slug derived from project_name (lowercase, hyphens), and is "
+        "overridden by an explicit --slug"
+    ),
     "package_name": "Python/Java package identifier derived from project_slug (underscores replace hyphens)",
     "description": "Project description (--description flag; default: 'A generated Forge project.')",
 }
@@ -159,11 +163,18 @@ _LANGUAGE_OUTPUT_STRUCTURE: dict[str, dict[str, str]] = {
     },
 }
 
+# Traceable to forge/project_metadata.py::write_project_metadata() and RECEIPT_VERSION
 _COMMON_OUTPUT_FILES: dict[str, str] = {
     ".forge/project.json": (
-        "Forge metadata receipt. Fields: project_name, template_name, "
-        "created_at (UTC ISO 8601 Z), forge_version, docker_enabled, "
-        "jenkins_enabled, git_initialized, remote_configured"
+        "Forge metadata receipt, version 2. Fields: receipt_version, project_name, "
+        "project_slug, template_name, created_at (UTC ISO 8601 Z), forge_version, "
+        "docker_enabled, jenkins_enabled, git_initialized, remote_configured. "
+        "Identity semantics are versioned: in a version-2 receipt project_name is "
+        "the human-readable display name and project_slug is the machine identity. "
+        "Historical receipts have no receipt_version key and store the derived slug "
+        "in project_name, because the two were not separable when they were "
+        "written; they are valid artifacts and are not migrated. Branch on "
+        "receipt_version rather than guessing"
     ),
     "Dockerfile (optional)": "Included when forge new --with-docker is used",
     "docker-compose.yml (optional)": "Included when forge new --with-docker is used",
