@@ -5,13 +5,32 @@ description = "Read-only MCP server for Forge repository knowledge"
 readme = "README.md"
 requires-python = ">=3.10"
 dependencies = [
-    "mcp[cli]>=1.0",
+    # forge-mcp is a FastMCP consumer: server.py builds `FastMCP("forge-mcp")`,
+    # sets `_mcp_server.version`, and registers every tool with `@mcp.tool()`.
+    #
+    # Upper bound: mcp 2.x REMOVED `mcp.server.fastmcp` -- its server entry point
+    # is `mcp.server.mcpserver.MCPServer`, a different class with a different
+    # API -- so a clean install resolving 2.x cannot import this package at all.
+    #
+    # Lower bound: mcp 1.0.0 provides neither `mcp.server.fastmcp` nor the `cli`
+    # extra, so the previous `>=1.0` was untrue at both ends. 1.28 is the floor
+    # this project is actually supported and verified on.
+    "mcp[cli]>=1.28,<2",
 ]
 
 [project.optional-dependencies]
 dev = [
     "pytest>=8",
     "ruff>=0.8",
+    # Used by the dependency-contract tests to parse the declared requirement.
+    # It arrives transitively with pytest, but relying on that would be the same
+    # undeclared-assumption mistake this constraint exists to prevent.
+    "packaging",
+    # Those tests read the committed pyproject.toml rather than installed
+    # distribution metadata. tomllib is stdlib from 3.11; this project supports
+    # 3.10, so the backport is declared only where it is actually needed. It
+    # keeps the suite valid on 3.10 instead of silently raising the floor.
+    "tomli; python_version < '3.11'",
 ]
 
 [project.scripts]
