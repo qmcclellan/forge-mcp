@@ -1,0 +1,66 @@
+# CI for forge-mcp pull requests targeting main.
+#
+# Purpose, narrowly: create a CLEAN supported Python environment, install
+# forge-mcp from its COMMITTED project metadata, and run the committed suite.
+#
+# The clean install is the point, not incidental. forge-mcp shipped a release
+# whose declared `mcp[cli]>=1.0` resolved to mcp 2.0.0, which removed
+# `mcp.server.fastmcp` -- so the package could not import itself on any fresh
+# machine, while the maintainer's warm virtualenv kept working. That defect
+# (KS-0046) was invisible to every local run. So this workflow deliberately:
+#
+#   * installs with no cache, so the resolver runs for real every time;
+#   * never pins or preinstalls mcp here -- the version comes from pyproject,
+#     and checking what the resolver picks IS the test;
+#   * records the resolved mcp version, so a future break is legible from the
+#     log rather than requiring a bisect.
+#
+# Trigger: pull_request to main only. No main-branch push trigger, no matrix, no
+# caching, no lint, coverage, release or publish steps, no secrets, and no
+# private infrastructure. This exists so a forge-mcp pull request stops
+# reporting zero checks; it is not a CI platform.
+#
+# Python version: pyproject requires >=3.10. 3.12 is pinned because it is the
+# interpreter every recorded local and fresh-environment proof for KS-0046 ran
+# on. A matrix across the whole supported range is deliberately out of scope.
+#
+# `python3` is invoked explicitly rather than a bare `python`. Runners provide
+# both, but this fleet has already shipped one defect that assumed the bare
+# alias existed (Forge KS-0016), and CI should test the interpreter binding the
+# project actually documents.
+
+name: tests
+
+on:
+  pull_request:
+    branches: [main]
+
+jobs:
+  tests:
+    name: forge-mcp suite — Python 3.12
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python 3.12
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Record the interpreter actually used
+        run: |
+          python3 --version
+          python3 -c "import sys; print(sys.executable)"
+
+      - name: Install forge-mcp from committed metadata
+        run: python3 -m pip install '.[dev]'
+
+      - name: Record the resolved MCP version
+        run: python3 -c "from importlib.metadata import version; print('mcp', version('mcp'))"
+
+      - name: Prove the server imports
+        run: python3 -c "from forge_mcp.server import mcp; print('forge_mcp.server OK:', mcp.name)"
+
+      - name: Run the committed suite
+        run: python3 -m pytest -q
